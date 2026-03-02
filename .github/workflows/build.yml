@@ -24,13 +24,10 @@ jobs:
 
       - name: Build Android Wheel natively
         working-directory: jiter_src
-        run: >
-          maturin build 
-          --release 
-          --target aarch64-linux-android 
-          --zig 
-          -i python
-          --out ../dist
+        run: |
+          maturin build --release --target aarch64-linux-android --zig -i python3.12 --out ../dist
+
+
 
       - name: Upload wheel
         uses: actions/upload-artifact@v4
