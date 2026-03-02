@@ -1,15 +1,23 @@
-name: Build Android Wheel
-on: [workflow_dispatch] # Allows you to trigger it manually
+name: Build Jiter Android Wheel
+on: [workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Download official jiter source from PyPI
+        run: |
+          pip download jiter --no-binary=:all: --no-deps
+          mkdir jiter_src
+          # Extract the downloaded .tar.gz source directly into the folder
+          tar -xzf jiter-*.tar.gz -C jiter_src --strip-components=1
+
       - uses: PyO3/maturin-action@v1
         with:
           target: aarch64-linux-android
-          args: --release --out dist
+          working-directory: jiter_src
+          args: --release --out ../dist
+
       - name: Upload wheel
         uses: actions/upload-artifact@v4
         with:
