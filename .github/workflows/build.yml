@@ -1,23 +1,36 @@
 name: Build Jiter Android Wheel
+
 on: [workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Maturin & Zig linker
+        run: |
+          pip install "maturin[zig]"
+          rustup target add aarch64-linux-android
+
       - name: Download official jiter source from PyPI
         run: |
           pip download jiter --no-binary=:all: --no-deps
           mkdir jiter_src
-          # Extract the downloaded .tar.gz source directly into the folder
           tar -xzf jiter-*.tar.gz -C jiter_src --strip-components=1
 
-      - uses: PyO3/maturin-action@v1
-        with:
-          target: aarch64-linux-android
-          working-directory: jiter_src
-          args: --release --out dist -m crates/jiter/Cargo.toml
-
+      - name: Build Android Wheel natively
+        working-directory: jiter_src
+        run: >
+          maturin build 
+          --release 
+          --target aarch64-linux-android 
+          --zig 
+          -i python
+          --out ../dist
 
       - name: Upload wheel
         uses: actions/upload-artifact@v4
