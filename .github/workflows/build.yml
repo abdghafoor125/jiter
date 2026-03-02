@@ -1,4 +1,4 @@
-name: Build Jiter Android (Final Fix)
+name: Build Jiter Android (Fix Absolute Path)
 on: [workflow_dispatch]
 
 jobs:
@@ -10,11 +10,11 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Rust and Target
+      - name: Install Rust & Target
         run: |
           rustup target add aarch64-linux-android
 
-      - name: Install Maturin and Zig
+      - name: Install Maturin & Zig
         run: |
           pip install "maturin[zig]"
 
@@ -24,28 +24,29 @@ jobs:
           mkdir src_dir
           tar -xzf jiter-*.tar.gz -C src_dir --strip-components=1
 
-      - name: Create PyO3 Config
-        # This manually defines the Android environment so Maturin doesn't have to search for it.
+      - name: Create PyO3 Configuration
         run: |
-          cat <<EOF > android_config.txt
+          cat <<EOF > $GITHUB_WORKSPACE/pyo3_config.txt
           implementation=CPython
-          version=3.12
+          version=3.8
           shared=true
           abi3=true
           EOF
 
       - name: Build Wheel
         working-directory: src_dir
-        env:
-          PYO3_CONFIG_FILE: ../android_config.txt
         run: |
+          # The fix: Using GITHUB_WORKSPACE to ensure the path is absolute
+          export PYO3_CONFIG_FILE="$GITHUB_WORKSPACE/pyo3_config.txt"
+          export PYO3_NO_PYTHON=1
+          
           maturin build \
             --release \
             --target aarch64-linux-android \
             --zig \
             --out ../dist
 
-      - name: Upload Wheel
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: jiter-android-wheel
