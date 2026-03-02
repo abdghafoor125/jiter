@@ -21,11 +21,13 @@ jobs:
           pip download jiter --no-binary=:all: --no-deps
           mkdir jiter_src
           tar -xzf jiter-*.tar.gz -C jiter_src --strip-components=1
-
       - name: Build Android Wheel natively
         working-directory: jiter_src
+        env:
+          PYO3_CROSS_PYTHON_VERSION: "3.12"
+          ANDROID_API_LEVEL: "24"
         run: |
-          maturin build --release --target aarch64-linux-android --zig -i python3.12 --out ../dist
+          maturin build --release --target aarch64-linux-android --zig --out ../dist
 
 
 
