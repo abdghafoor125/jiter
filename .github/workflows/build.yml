@@ -1,40 +1,17 @@
-name: Build Android aarch64 Wheels
-
-on:
-  push:
-    branches:
-      - main
+name: Build Android Wheel
+on: [workflow_dispatch] # Allows you to trigger it manually
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v6
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
         with:
-          python-version: "3.12"
-
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-linux-android
-
-      - name: Install Android NDK
-        uses: ndk-build/action@v1
-        with:
-          ndk-version: r25
-
-      - name: Build wheels for Android aarch64
-        uses: PyO3/maturin-action@v1
-        with:
-          target: aarch64
+          target: aarch64-linux-android
           args: --release --out dist
-          working-directory: crates/jiter-python
-
-      - name: Upload artifacts
+      - name: Upload wheel
         uses: actions/upload-artifact@v4
         with:
-          name: android_aarch64_wheels
-          path: crates/jiter-python/dist
+          name: android-wheel
+          path: dist/*.whl
