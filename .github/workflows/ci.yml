@@ -285,31 +285,10 @@ jobs:
             target: aarch64
             interpreter: graalpy3.11 graalpy3.12
 
-          # musllinux
-          - os: linux
-            manylinux: musllinux_1_1
-            target: x86_64
-          - os: linux
-            manylinux: musllinux_1_1
-            target: aarch64
-            runs-on: ubuntu-24.04-arm
+          # 
 
-          # macos;
-          # all versions x86_64
-          # 3.9 can't be run on the arm hardware for PGO
-          - os: macos
-            target: x86_64
-            interpreter: 3.9 3.10 3.11 3.12 3.13 3.14 graalpy3.11 graalpy3.12
-          - os: macos
-            target: aarch64
-            interpreter: 3.9 graalpy3.11 graalpy3.12
 
-          # windows 11 arm supports 3.11 and up
-          - os: windows
-            target: aarch64
-            runs-on: windows-11-arm
-            interpreter: "3.11 3.12 3.13 3.13t 3.14 3.14t"
-
+          
     runs-on: ${{ matrix.runs-on || format('{0}-latest', (matrix.os == 'linux' && 'ubuntu') || matrix.os)  }}
     steps:
       - uses: actions/checkout@v5
