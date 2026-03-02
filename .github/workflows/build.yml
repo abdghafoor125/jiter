@@ -1,29 +1,51 @@
-name: Build Jiter Android
+name: Build Jiter Android (Final Fix)
 on: [workflow_dispatch]
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Download and Flatten Source
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Rust and Target
         run: |
-          # Download the latest stable source from PyPI
+          rustup target add aarch64-linux-android
+
+      - name: Install Maturin and Zig
+        run: |
+          pip install "maturin[zig]"
+
+      - name: Download Jiter Source
+        run: |
           pip download jiter --no-binary=:all: --no-deps
           mkdir src_dir
-          # Extract and remove the top-level folder so Cargo.toml is at the root
           tar -xzf jiter-*.tar.gz -C src_dir --strip-components=1
 
-      - name: Build Wheel
-        uses: PyO3/maturin-action@v1
-        with:
-          target: aarch64-linux-android
-          working-directory: src_dir
-          # This specifies the exact container that has Android Python configs.
-          # GitHub handles the multi-gigabyte download on their end.
-          container: ghcr.io/rust-cross/maturin:main
-          args: --release --out ../dist --find-interpreter
+      - name: Create PyO3 Config
+        # This manually defines the Android environment so Maturin doesn't have to search for it.
+        run: |
+          cat <<EOF > android_config.txt
+          implementation=CPython
+          version=3.12
+          shared=true
+          abi3=true
+          EOF
 
-      - name: Upload Artifact
+      - name: Build Wheel
+        working-directory: src_dir
+        env:
+          PYO3_CONFIG_FILE: ../android_config.txt
+        run: |
+          maturin build \
+            --release \
+            --target aarch64-linux-android \
+            --zig \
+            --out ../dist
+
+      - name: Upload Wheel
         uses: actions/upload-artifact@v4
         with:
           name: jiter-android-wheel
