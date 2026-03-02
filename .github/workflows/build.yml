@@ -16,7 +16,8 @@ jobs:
         with:
           target: aarch64-linux-android
           working-directory: jiter_src
-          args: --release --out ../dist
+          args: --release --out dist -m crates/jiter/Cargo.toml
+
 
       - name: Upload wheel
         uses: actions/upload-artifact@v4
