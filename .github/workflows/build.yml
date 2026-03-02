@@ -1,4 +1,4 @@
-name: Build Jiter Android (Fix Absolute Path)
+name: Build Jiter Android (Stable Version Fix)
 on: [workflow_dispatch]
 
 jobs:
@@ -18,17 +18,19 @@ jobs:
         run: |
           pip install "maturin[zig]"
 
-      - name: Download Jiter Source
+      - name: Download STABLE Jiter Source
         run: |
-          pip download jiter --no-binary=:all: --no-deps
+          # We force version 0.8.2 which is the industry standard and stable.
+          # v0.13.0 is experimental and contains the Rust traits error you saw.
+          pip download jiter==0.8.2 --no-binary=:all: --no-deps
           mkdir src_dir
-          tar -xzf jiter-*.tar.gz -C src_dir --strip-components=1
+          tar -xzf jiter-0.8.2.tar.gz -C src_dir --strip-components=1
 
       - name: Create PyO3 Configuration
         run: |
           cat <<EOF > $GITHUB_WORKSPACE/pyo3_config.txt
           implementation=CPython
-          version=3.8
+          version=3.12
           shared=true
           abi3=true
           EOF
@@ -36,7 +38,6 @@ jobs:
       - name: Build Wheel
         working-directory: src_dir
         run: |
-          # The fix: Using GITHUB_WORKSPACE to ensure the path is absolute
           export PYO3_CONFIG_FILE="$GITHUB_WORKSPACE/pyo3_config.txt"
           export PYO3_NO_PYTHON=1
           
