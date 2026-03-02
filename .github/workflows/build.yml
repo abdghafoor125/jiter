@@ -1,4 +1,4 @@
-name: Build Jiter (Nuclear Option)
+name: Build Jiter (Fixed Nuclear Option)
 on: [workflow_dispatch]
 
 jobs:
@@ -13,9 +13,11 @@ jobs:
       - name: Install Maturin & Zig
         run: pip install "maturin[zig]"
 
-      - name: Download Jiter Source (Bypass Workspace Error)
+      - name: Install Rust Target (This was missing!)
+        run: rustup target add aarch64-unknown-linux-musl
+
+      - name: Download Jiter Source
         run: |
-          # We download the source from PyPI to avoid the Cargo.toml workspace error
           pip download jiter --no-binary=:all: --no-deps
           mkdir jiter_src
           tar -xzf jiter-*.tar.gz -C jiter_src --strip-components=1
@@ -23,24 +25,23 @@ jobs:
       - name: Build Static MUSL Wheel
         working-directory: jiter_src
         run: |
-          # We build for Generic Linux (Musl). 
-          # Maturin accepts this because it has standard config for Musl.
+          # Build for generic Linux (Musl)
+          # Zig handles the C-linking, Rust handles the code.
           maturin build --release --target aarch64-unknown-linux-musl --zig -i python3.12 --out ../dist
 
       - name: Rename Wheel for Android
         run: |
           cd dist
-          # The file will look like: jiter-0.8.0-cp312-cp312-musllinux_1_2_aarch64.whl
+          # The file will likely be named: jiter-0.8.0-cp312-cp312-musllinux_1_2_aarch64.whl
           WHEEL_NAME=$(ls *.whl)
+          echo "Original Name: $WHEEL_NAME"
           
-          # We force-rename the platform tag from 'musllinux...' to 'android...'
-          # 'abi3' ensures it works on Python 3.8+
-          # 'android_24' ensures pip accepts it as compatible
-          
-          # Construct the new name manually to be safe:
-          # jiter-[version]-cp38-abi3-android_24_aarch64.whl
-          
+          # We extract the version number from the filename
+          # (Assumes standard naming: package-version-...)
           VERSION=$(echo $WHEEL_NAME | cut -d- -f2)
+          
+          # We force the name to be an Android ABI3 wheel.
+          # This tells Pip: "I am compatible with Python 3.8+ on Android ARM64"
           NEW_NAME="jiter-${VERSION}-cp38-abi3-android_24_aarch64.whl"
           
           mv "$WHEEL_NAME" "$NEW_NAME"
